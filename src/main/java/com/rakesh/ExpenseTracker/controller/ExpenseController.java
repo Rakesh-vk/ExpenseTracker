@@ -28,6 +28,13 @@ public class ExpenseController {
         System.out.println("get Mapping");
         return new ResponseEntity<>(expenseService.getAllData(), HttpStatus.OK);
     }
+    @GetMapping
+    public ResponseEntity<ExpenseResponseDTO> getExpenseById(
+            @RequestBody ExpenseRequestDTO requestDTO
+    ){
+        expenseService.getDataById(requestDTO);
+        return new ResponseEntity<>(expenseService.geDataById,HttpStatus.OK);
+    }
     @PostMapping
     public ResponseEntity<ExpenseResponseDTO> saveExpense(
             @RequestBody ExpenseRequestDTO requestDTO) {
@@ -36,5 +43,11 @@ public class ExpenseController {
                 expenseService.saveData(requestDTO);
 
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
+    }
+    @PutMapping
+    public ResponseEntity<ExpenseResponseDTO> updateExpense(
+            @RequestBody ExpenseRequestDTO requestDTO){
+        ExpenseResponseDTO responseDTO = expenseService.updateData(requestDTO);
+        return new ResponseEntity<>(responseDTO,HttpStatus.OK);
     }
 }
