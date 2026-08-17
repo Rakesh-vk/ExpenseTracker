@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "expense")
 @Getter
@@ -22,5 +25,13 @@ public class Expense {
     private String spendOn;
 
     @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
+
+    @Column(name = "expense_date_time", nullable = false)
+    private LocalDateTime dateAndTime;
+
+    @PrePersist
+    protected void onCreate() {
+        dateAndTime = LocalDateTime.now();
+    }
 }
