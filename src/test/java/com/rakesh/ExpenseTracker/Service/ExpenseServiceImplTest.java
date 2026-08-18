@@ -18,6 +18,8 @@ import static org.mockito.ArgumentMatchers.any;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -246,4 +248,38 @@ class ExpenseServiceImplTest {
                 exception.getMessage()
         );
     }
+    @Test
+    void shouldGetAllExpenses() {
+
+        Expense expense1 = new Expense();
+        expense1.setId(1L);
+        expense1.setSpendOn("Food");
+        expense1.setAmount(new BigDecimal("500"));
+        expense1.setDateAndTime(LocalDateTime.now());
+
+        Expense expense2 = new Expense();
+        expense2.setId(2L);
+        expense2.setSpendOn("Travel");
+        expense2.setAmount(new BigDecimal("1000"));
+        expense2.setDateAndTime(LocalDateTime.now());
+
+        when(expenseRepository.findAll())
+                .thenReturn(List.of(expense1, expense2));
+
+        List<ExpenseResponseDTO> result =
+                expenseService.getAllData();
+
+        assertEquals(2, result.size());
+
+        assertEquals(1L, result.get(0).getId());
+        assertEquals("Food", result.get(0).getSpendOn());
+        assertEquals(new BigDecimal("500"), result.get(0).getAmount());
+
+        assertEquals(2L, result.get(1).getId());
+        assertEquals("Travel", result.get(1).getSpendOn());
+        assertEquals(new BigDecimal("1000"), result.get(1).getAmount());
+
+        verify(expenseRepository).findAll();
+    }
+
 }

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,8 +28,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,7 +36,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 
 @Slf4j
 @WebMvcTest(ExpenseController.class)
@@ -173,7 +171,7 @@ class ExpenseControllerTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .contentType(APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isCreated())
@@ -204,7 +202,7 @@ class ExpenseControllerTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .contentType(APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
@@ -239,7 +237,7 @@ class ExpenseControllerTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .contentType(APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
@@ -274,7 +272,7 @@ class ExpenseControllerTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .contentType(APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
@@ -323,7 +321,7 @@ class ExpenseControllerTest {
 
         mockMvc.perform(
                         put("/Expense/1")
-                                .contentType(APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isOk())
@@ -357,7 +355,7 @@ class ExpenseControllerTest {
 
         mockMvc.perform(
                         put("/Expense/1")
-                                .contentType(APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
@@ -407,7 +405,7 @@ class ExpenseControllerTest {
 
         mockMvc.perform(
                         put("/Expense/99")
-                                .contentType(APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isNotFound())

@@ -9,15 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    // amount validation errors handler (presently handled by the bean validations)
-    @ExceptionHandler(InvalidAmountException.class)
-    public ResponseEntity<String> handleInvalidAmount(
-            InvalidAmountException ex) {
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
-    }
 
     @ExceptionHandler(ExpenseNotFound.class)
     public ResponseEntity<String> handleExpenseNotFound(

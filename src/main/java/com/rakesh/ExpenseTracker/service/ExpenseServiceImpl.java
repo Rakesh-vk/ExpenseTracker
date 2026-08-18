@@ -4,14 +4,10 @@ import com.rakesh.ExpenseTracker.dto.ExpenseRequestDTO;
 import com.rakesh.ExpenseTracker.dto.ExpenseResponseDTO;
 import com.rakesh.ExpenseTracker.entity.Expense;
 import com.rakesh.ExpenseTracker.exception.ExpenseNotFound;
-import com.rakesh.ExpenseTracker.exception.InvalidAmountException;
 import com.rakesh.ExpenseTracker.repository.ExpenseRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -25,6 +21,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public List<ExpenseResponseDTO> getAllData() {
+        log.debug("getAllData running");
         return expenseRepository.findAll()
                 .stream()
                 .map(expense -> new ExpenseResponseDTO(
@@ -100,12 +97,5 @@ public class ExpenseServiceImpl implements ExpenseService {
         expenseRepository.delete(expense);
     }
 
-    private void validateAmount(BigDecimal amount) {
 
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidAmountException(
-                    "Amount must be greater than zero"
-            );
-        }
-    }
 }
