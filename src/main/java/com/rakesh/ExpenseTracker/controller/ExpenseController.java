@@ -28,12 +28,12 @@ public class ExpenseController {
         System.out.println("get Mapping");
         return new ResponseEntity<>(expenseService.getAllData(), HttpStatus.OK);
     }
-    @GetMapping
+    @GetMapping("/{id}")
     public ResponseEntity<ExpenseResponseDTO> getExpenseById(
-            @RequestBody ExpenseRequestDTO requestDTO
-    ){
-        expenseService.getDataById(requestDTO);
-        return new ResponseEntity<>(expenseService.geDataById,HttpStatus.OK);
+            @PathVariable Long id) {
+        log.debug("getExpenseById Controller entered");
+        ExpenseResponseDTO responseDTO = expenseService.getDataById(id);
+        return ResponseEntity.ok(responseDTO);
     }
     @PostMapping
     public ResponseEntity<ExpenseResponseDTO> saveExpense(
@@ -44,10 +44,22 @@ public class ExpenseController {
 
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
-    @PutMapping
+    @PutMapping("/{id}")
     public ResponseEntity<ExpenseResponseDTO> updateExpense(
-            @RequestBody ExpenseRequestDTO requestDTO){
-        ExpenseResponseDTO responseDTO = expenseService.updateData(requestDTO);
-        return new ResponseEntity<>(responseDTO,HttpStatus.OK);
+            @PathVariable Long id,
+            @RequestBody ExpenseRequestDTO requestDTO) {
+
+        ExpenseResponseDTO responseDTO =
+                expenseService.updateData(id, requestDTO);
+
+        return ResponseEntity.ok(responseDTO);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteExpense(
+            @PathVariable Long id) {
+
+        expenseService.deleteExpense(id);
+
+        return ResponseEntity.noContent().build();
     }
 }
