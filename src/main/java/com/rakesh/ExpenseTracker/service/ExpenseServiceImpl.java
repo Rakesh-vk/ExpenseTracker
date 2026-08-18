@@ -38,9 +38,6 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public ExpenseResponseDTO saveData(ExpenseRequestDTO requestDTO) {
-
-        validateAmount(requestDTO.getAmount());
-
         Expense expense = new Expense();
 
         expense.setSpendOn(requestDTO.getSpendOn());
@@ -60,9 +57,6 @@ public class ExpenseServiceImpl implements ExpenseService {
     public ExpenseResponseDTO updateData(
             Long id,
             ExpenseRequestDTO requestDTO) {
-        validateAmount(requestDTO.getAmount());
-
-
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() ->
                         new ExpenseNotFound(
@@ -86,12 +80,12 @@ public class ExpenseServiceImpl implements ExpenseService {
     public ExpenseResponseDTO getDataById(Long id) {
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() -> new ExpenseNotFound("Expense not found with id: " + id));
-        ExpenseResponseDTO responseDTO = new ExpenseResponseDTO();
-        responseDTO.setId(expense.getId());
-        responseDTO.setSpendOn(expense.getSpendOn());
-        responseDTO.setAmount(expense.getAmount());
-
-        return responseDTO;
+        return new ExpenseResponseDTO(
+                expense.getId(),
+                expense.getSpendOn(),
+                expense.getAmount(),
+                expense.getDateAndTime()
+        );
     }
 
     @Override

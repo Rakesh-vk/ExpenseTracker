@@ -3,6 +3,7 @@ package com.rakesh.ExpenseTracker.controller;
 import com.rakesh.ExpenseTracker.dto.ExpenseRequestDTO;
 import com.rakesh.ExpenseTracker.dto.ExpenseResponseDTO;
 import com.rakesh.ExpenseTracker.service.ExpenseService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +38,7 @@ public class ExpenseController {
     }
     @PostMapping
     public ResponseEntity<ExpenseResponseDTO> saveExpense(
-            @RequestBody ExpenseRequestDTO requestDTO) {
+            @Valid @RequestBody ExpenseRequestDTO requestDTO) {
 
         ExpenseResponseDTO responseDTO =
                 expenseService.saveData(requestDTO);
@@ -46,8 +47,8 @@ public class ExpenseController {
     }
     @PutMapping("/{id}")
     public ResponseEntity<ExpenseResponseDTO> updateExpense(
-            @PathVariable Long id,
-            @RequestBody ExpenseRequestDTO requestDTO) {
+             @PathVariable Long id,
+             @Valid @RequestBody ExpenseRequestDTO requestDTO) {
 
         ExpenseResponseDTO responseDTO =
                 expenseService.updateData(id, requestDTO);
