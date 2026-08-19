@@ -1,5 +1,6 @@
 package com.rakesh.ExpenseTracker.exception;
 
+import com.rakesh.ExpenseTracker.dto.ErrorResponseDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +42,7 @@ class GlobalExceptionHandlerTest {
                         bindingResult
                 );
 
-        ResponseEntity<String> response =
+        ResponseEntity<ErrorResponseDTO> response =
                 handler.handleValidationErrors(exception);
 
         assertEquals(
