@@ -33,7 +33,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -133,11 +132,10 @@ class ExpenseControllerTest {
 
         mockMvc.perform(get("/Expense/99"))
                 .andExpect(status().isNotFound())
-                .andExpect(
-                        content().string(
-                                "Expense not found with id: 99"
-                        )
-                );
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Expense not found with id: 99"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verify(expenseService).getDataById(99L);
 
@@ -206,11 +204,10 @@ class ExpenseControllerTest {
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(
-                        content().string(
-                                "Amount must be greater than zero"
-                        )
-                );
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Amount must be greater than zero"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verify(
                 expenseService,
@@ -241,11 +238,10 @@ class ExpenseControllerTest {
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(
-                        content().string(
-                                "Amount is required"
-                        )
-                );
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Amount is required"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verify(
                 expenseService,
@@ -276,11 +272,10 @@ class ExpenseControllerTest {
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(
-                        content().string(
-                                "Spend on is required"
-                        )
-                );
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Spend on is required"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verify(
                 expenseService,
@@ -359,11 +354,10 @@ class ExpenseControllerTest {
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(
-                        content().string(
-                                "Amount must be greater than zero"
-                        )
-                );
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Amount must be greater than zero"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verify(
                 expenseService,
@@ -409,11 +403,10 @@ class ExpenseControllerTest {
                                 .content(requestJson)
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(
-                        content().string(
-                                "Expense not found with id 99"
-                        )
-                );
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Expense not found with id 99"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verify(expenseService)
                 .updateData(
@@ -464,11 +457,10 @@ class ExpenseControllerTest {
 
         mockMvc.perform(delete("/Expense/99"))
                 .andExpect(status().isNotFound())
-                .andExpect(
-                        content().string(
-                                "Expense not found with id 99"
-                        )
-                );
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Expense not found with id 99"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verify(expenseService)
                 .deleteExpense(99L);

@@ -24,6 +24,14 @@ public class GlobalExceptionHandler {
                 .body(errorResponseDTO);
 
     }
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDTO> handleUserAlreadyExistsException(
+            UserAlreadyExistsException ex
+    ){
+        ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(HttpStatus.CONFLICT.value(),ex.getMessage(),LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponseDTO);
+    }
 
     // bean validation exception handler
     @ExceptionHandler(MethodArgumentNotValidException.class)

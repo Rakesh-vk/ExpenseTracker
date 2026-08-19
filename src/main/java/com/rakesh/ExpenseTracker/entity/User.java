@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.UniqueElements;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -25,4 +27,11 @@ public class User {
     private String email;
     @Column(nullable = false)
     private String password;
+    @Column(name = "user_date_time", nullable = false)
+    private LocalDateTime dateAndTime;
+
+    @PrePersist
+    protected void onCreate() {
+        dateAndTime = LocalDateTime.now();
+    }
 }

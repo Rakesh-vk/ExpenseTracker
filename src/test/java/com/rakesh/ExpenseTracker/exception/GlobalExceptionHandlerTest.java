@@ -8,9 +8,8 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class GlobalExceptionHandlerTest {
 
@@ -45,14 +44,30 @@ class GlobalExceptionHandlerTest {
         ResponseEntity<ErrorResponseDTO> response =
                 handler.handleValidationErrors(exception);
 
+        // HTTP status
         assertEquals(
                 HttpStatus.BAD_REQUEST,
                 response.getStatusCode()
         );
 
+        // Response body
+        ErrorResponseDTO body = response.getBody();
+
+        assertNotNull(body);
+
+        // ErrorResponseDTO.status
+        assertEquals(
+                400,
+                body.getStatus()
+        );
+
+        // ErrorResponseDTO.message
         assertEquals(
                 "Amount must be greater than zero",
-                response.getBody()
+                body.getMessage()
         );
+
+        // ErrorResponseDTO.timestamp
+        assertNotNull(body.getTimestamp());
     }
 }

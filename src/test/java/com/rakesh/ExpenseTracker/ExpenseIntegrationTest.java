@@ -1,30 +1,36 @@
 package com.rakesh.ExpenseTracker;
 
 import com.rakesh.ExpenseTracker.repository.ExpenseRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-
-
+@WithMockUser
 @SpringBootTest
 @AutoConfigureMockMvc
 class ExpenseIntegrationTest {
+    @Autowired
+    private WebApplicationContext context;
 
     @Autowired
     private MockMvc mockMvc;
@@ -34,6 +40,14 @@ class ExpenseIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @BeforeEach
+    void setup() {
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+    }
 
 
     @Test
@@ -52,6 +66,7 @@ class ExpenseIntegrationTest {
 
         String response = mockMvc.perform(
                         post("/Expense")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
@@ -100,71 +115,85 @@ class ExpenseIntegrationTest {
                 .andExpect(jsonPath("$.amount")
                         .value(500));
     }
+
+
     @Test
     void shouldRejectNegativeAmount() throws Exception {
 
         String requestJson = """
-            {
-                "spendOn": "Food",
-                "amount": -500
-            }
-            """;
+                {
+                    "spendOn": "Food",
+                    "amount": -500
+                }
+                """;
 
         mockMvc.perform(
                         post("/Expense")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(
-                        jsonPath("$").value(
-                                "Amount must be greater than zero"
-                        )
-                );
+                .andExpect(jsonPath("$.status")
+                        .value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Amount must be greater than zero"))
+                .andExpect(jsonPath("$.timestamp")
+                        .exists());
     }
+
+
     @Test
     void shouldRejectMissingAmount() throws Exception {
 
         String requestJson = """
-            {
-                "spendOn": "Food"
-            }
-            """;
+                {
+                    "spendOn": "Food"
+                }
+                """;
 
         mockMvc.perform(
                         post("/Expense")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(
-                        jsonPath("$").value(
-                                "Amount is required"
-                        )
-                );
+                .andExpect(jsonPath("$.status")
+                        .value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Amount is required"))
+                .andExpect(jsonPath("$.timestamp")
+                        .exists());
     }
+
+
     @Test
     void shouldRejectBlankSpendOn() throws Exception {
 
         String requestJson = """
-            {
-                "spendOn": "",
-                "amount": 500
-            }
-            """;
+                {
+                    "spendOn": "",
+                    "amount": 500
+                }
+                """;
 
         mockMvc.perform(
                         post("/Expense")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(
-                        jsonPath("$").value(
-                                "Spend on is required"
-                        )
-                );
+                .andExpect(jsonPath("$.status")
+                        .value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Spend on is required"))
+                .andExpect(jsonPath("$.timestamp")
+                        .exists());
     }
+
+
     @Test
     void shouldReturn404ForNonExistingExpense() throws Exception {
 
@@ -172,47 +201,55 @@ class ExpenseIntegrationTest {
                         get("/Expense/999999")
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(
-                        jsonPath("$").value(
-                                "Expense not found with id: 999999"
-                        )
-                );
+                .andExpect(jsonPath("$.status")
+                        .value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Expense not found with id: 999999"))
+                .andExpect(jsonPath("$.timestamp")
+                        .exists());
     }
+
+
     @Test
     void shouldReturn404WhenUpdatingNonExistingExpense()
             throws Exception {
 
         String requestJson = """
-            {
-                "spendOn": "Food",
-                "amount": 500
-            }
-            """;
+                {
+                    "spendOn": "Food",
+                    "amount": 500
+                }
+                """;
 
         mockMvc.perform(
                         put("/Expense/999999")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestJson)
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(
-                        jsonPath("$").value(
-                                "Expense not found with id 999999"
-                        )
-                );
+                .andExpect(jsonPath("$.status")
+                        .value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Expense not found with id 999999"))
+                .andExpect(jsonPath("$.timestamp")
+                        .exists());
     }
+
+
     @Test
     void shouldReturn404WhenDeletingNonExistingExpense()
             throws Exception {
 
         mockMvc.perform(
-                        delete("/Expense/999999")
+                        delete("/Expense/999999").with(csrf())
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(
-                        jsonPath("$").value(
-                                "Expense not found with id 999999"
-                        )
-                );
+                .andExpect(jsonPath("$.status")
+                        .value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Expense not found with id 999999"))
+                .andExpect(jsonPath("$.timestamp")
+                        .exists());
     }
 }
