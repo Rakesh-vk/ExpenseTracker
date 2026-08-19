@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class JwtAuthenticationFilterTest {
@@ -54,12 +55,15 @@ class JwtAuthenticationFilterTest {
                         .authorities("USER")
                         .build();
 
-        when(jwtService.extractEmail(token))
-                .thenReturn(email);
-
+        // Token must be valid first
         when(jwtService.isTokenValid(token))
                 .thenReturn(true);
 
+        // Then extract email
+        when(jwtService.extractEmail(token))
+                .thenReturn(email);
+
+        // Then load user
         when(userDetailsService.loadUserByUsername(email))
                 .thenReturn(userDetails);
 
@@ -80,12 +84,14 @@ class JwtAuthenticationFilterTest {
                 filterChain
         );
 
+        // Assert authentication exists
         assertNotNull(
                 SecurityContextHolder
                         .getContext()
                         .getAuthentication()
         );
 
+        // Assert authenticated username
         assertEquals(
                 email,
                 SecurityContextHolder
@@ -94,15 +100,19 @@ class JwtAuthenticationFilterTest {
                         .getName()
         );
 
-        verify(jwtService)
-                .extractEmail(token);
-
+        // Verify JWT validation
         verify(jwtService)
                 .isTokenValid(token);
 
+        // Verify email extraction
+        verify(jwtService)
+                .extractEmail(token);
+
+        // Verify user lookup
         verify(userDetailsService)
                 .loadUserByUsername(email);
 
+        // Verify filter chain continues
         verify(filterChain)
                 .doFilter(request, response);
     }
@@ -191,8 +201,9 @@ class JwtAuthenticationFilterTest {
 
         String token = "invalid-token";
 
-        when(jwtService.extractEmail(token))
-                .thenThrow(new RuntimeException("Invalid token"));
+        // Invalid JWT
+        when(jwtService.isTokenValid(token))
+                .thenReturn(false);
 
         MockHttpServletRequest request =
                 new MockHttpServletRequest();
@@ -211,24 +222,32 @@ class JwtAuthenticationFilterTest {
                 filterChain
         );
 
+        // User must NOT be authenticated
         assertNull(
                 SecurityContextHolder
                         .getContext()
                         .getAuthentication()
         );
 
+        // Token validation should happen
         verify(jwtService)
-                .extractEmail(token);
+                .isTokenValid(token);
 
+        // Email should NOT be extracted
+        verify(jwtService, never())
+                .extractEmail(anyString());
+
+        // User should NOT be loaded
         verifyNoInteractions(userDetailsService);
 
+        // Request should continue
         verify(filterChain)
                 .doFilter(request, response);
     }
 
 
     // =========================================================
-    // VALID JWT BUT INVALIDATED
+    // EXPIRED / INVALID JWT
     // =========================================================
 
     @Test
@@ -236,22 +255,10 @@ class JwtAuthenticationFilterTest {
             throws Exception {
 
         String token = "expired-token";
-        String email = "rakesh@example.com";
 
-        UserDetails userDetails =
-                User.withUsername(email)
-                        .password("hashedPassword")
-                        .authorities("USER")
-                        .build();
-
-        when(jwtService.extractEmail(token))
-                .thenReturn(email);
-
+        // Expired/invalid token
         when(jwtService.isTokenValid(token))
                 .thenReturn(false);
-
-        when(userDetailsService.loadUserByUsername(email))
-                .thenReturn(userDetails);
 
         MockHttpServletRequest request =
                 new MockHttpServletRequest();
@@ -270,18 +277,25 @@ class JwtAuthenticationFilterTest {
                 filterChain
         );
 
+        // Authentication must remain null
         assertNull(
                 SecurityContextHolder
                         .getContext()
                         .getAuthentication()
         );
 
-        verify(jwtService)
-                .extractEmail(token);
-
+        // Token validation must happen
         verify(jwtService)
                 .isTokenValid(token);
 
+        // Do NOT extract email from invalid token
+        verify(jwtService, never())
+                .extractEmail(anyString());
+
+        // Do NOT load user
+        verifyNoInteractions(userDetailsService);
+
+        // Continue filter chain
         verify(filterChain)
                 .doFilter(request, response);
     }

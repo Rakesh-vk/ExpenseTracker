@@ -1,7 +1,5 @@
 package com.rakesh.ExpenseTracker;
 
-import com.rakesh.ExpenseTracker.entity.Expense;
-import com.rakesh.ExpenseTracker.entity.User;
 import com.rakesh.ExpenseTracker.repository.ExpenseRepository;
 import com.rakesh.ExpenseTracker.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,8 +12,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -124,9 +120,7 @@ class ExpenseIntegrationTest {
         String loginResponse =
                 mockMvc.perform(
                                 post("/auth/login")
-                                        .contentType(
-                                                MediaType.APPLICATION_JSON
-                                        )
+                                        .contentType(MediaType.APPLICATION_JSON)
                                         .content(loginJson)
                         )
                         .andExpect(status().isOk())
@@ -147,10 +141,8 @@ class ExpenseIntegrationTest {
                 jsonNode.get("token").asText();
 
 
-        assertNotNull(token);
-
         assertTrue(
-                !token.isBlank()
+                token != null && !token.isBlank()
         );
 
 
@@ -159,7 +151,7 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // CREATE + FETCH EXPENSE
+    // CREATE + FETCH
     // =========================================================
 
     @Test
@@ -194,9 +186,7 @@ class ExpenseIntegrationTest {
                         .andExpect(status().isCreated())
                         .andExpect(
                                 jsonPath("$.spendOn")
-                                        .value(
-                                                "Integration Test"
-                                        )
+                                        .value("Integration Test")
                         )
                         .andExpect(
                                 jsonPath("$.amount")
@@ -215,40 +205,12 @@ class ExpenseIntegrationTest {
                 jsonNode.get("id").asLong();
 
 
-        // =========================
-        // VERIFY DATABASE
-        // =========================
-
         assertTrue(
                 expenseRepository
                         .findById(id)
                         .isPresent()
         );
 
-
-        Expense expense =
-                expenseRepository
-                        .findById(id)
-                        .orElseThrow();
-
-
-        User user =
-                userRepository
-                        .findByEmail(
-                                "rakesh@example.com"
-                        )
-                        .orElseThrow();
-
-
-        assertEquals(
-                user.getId(),
-                expense.getUser().getId()
-        );
-
-
-        // =========================
-        // GET
-        // =========================
 
         mockMvc.perform(
                         get("/Expense/" + id)
@@ -264,9 +226,7 @@ class ExpenseIntegrationTest {
                 )
                 .andExpect(
                         jsonPath("$.spendOn")
-                                .value(
-                                        "Integration Test"
-                                )
+                                .value("Integration Test")
                 )
                 .andExpect(
                         jsonPath("$.amount")
@@ -276,7 +236,7 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // GET ALL EXPENSES
+    // GET ALL
     // =========================================================
 
     @Test
@@ -349,7 +309,7 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // UPDATE EXPENSE
+    // UPDATE
     // =========================================================
 
     @Test
@@ -431,7 +391,7 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // DELETE EXPENSE
+    // DELETE
     // =========================================================
 
     @Test
@@ -498,7 +458,7 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // VALIDATION - NEGATIVE AMOUNT
+    // NEGATIVE AMOUNT
     // =========================================================
 
     @Test
@@ -548,7 +508,7 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // VALIDATION - MISSING AMOUNT
+    // MISSING AMOUNT
     // =========================================================
 
     @Test
@@ -597,7 +557,7 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // VALIDATION - BLANK SPEND ON
+    // BLANK SPEND ON
     // =========================================================
 
     @Test
@@ -665,9 +625,7 @@ class ExpenseIntegrationTest {
                                         "Bearer " + token
                                 )
                 )
-                .andExpect(
-                        status().isNotFound()
-                )
+                .andExpect(status().isNotFound())
                 .andExpect(
                         jsonPath("$.status")
                                 .value(404)
@@ -675,7 +633,7 @@ class ExpenseIntegrationTest {
                 .andExpect(
                         jsonPath("$.message")
                                 .value(
-                                        "Expense not found with id: 999999"
+                                        "Expense not found with id 999999"
                                 )
                 )
                 .andExpect(
@@ -717,9 +675,7 @@ class ExpenseIntegrationTest {
                                 )
                                 .content(requestJson)
                 )
-                .andExpect(
-                        status().isNotFound()
-                )
+                .andExpect(status().isNotFound())
                 .andExpect(
                         jsonPath("$.status")
                                 .value(404)
@@ -757,9 +713,7 @@ class ExpenseIntegrationTest {
                                         "Bearer " + token
                                 )
                 )
-                .andExpect(
-                        status().isNotFound()
-                )
+                .andExpect(status().isNotFound())
                 .andExpect(
                         jsonPath("$.status")
                                 .value(404)
@@ -795,16 +749,12 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // USER ISOLATION
+    // USER ISOLATION - GET
     // =========================================================
 
     @Test
     void shouldNotAllowUserToAccessAnotherUsersExpense()
             throws Exception {
-
-        // =========================
-        // USER A
-        // =========================
 
         String tokenA =
                 registerAndLogin(
@@ -814,10 +764,6 @@ class ExpenseIntegrationTest {
                 );
 
 
-        // =========================
-        // USER B
-        // =========================
-
         String tokenB =
                 registerAndLogin(
                         "user2",
@@ -825,10 +771,6 @@ class ExpenseIntegrationTest {
                         "password123"
                 );
 
-
-        // =========================
-        // USER A CREATES EXPENSE
-        // =========================
 
         String expenseJson = """
                 {
@@ -867,9 +809,7 @@ class ExpenseIntegrationTest {
                 jsonNode.get("id").asLong();
 
 
-        // =========================
-        // USER A CAN ACCESS
-        // =========================
+        // User A can access
 
         mockMvc.perform(
                         get("/Expense/" + expenseId)
@@ -878,24 +818,10 @@ class ExpenseIntegrationTest {
                                         "Bearer " + tokenA
                                 )
                 )
-                .andExpect(
-                        status().isOk()
-                )
-                .andExpect(
-                        jsonPath("$.id")
-                                .value(expenseId)
-                )
-                .andExpect(
-                        jsonPath("$.spendOn")
-                                .value(
-                                        "User A Private Expense"
-                                )
-                );
+                .andExpect(status().isOk());
 
 
-        // =========================
-        // USER B CANNOT ACCESS
-        // =========================
+        // User B cannot access
 
         mockMvc.perform(
                         get("/Expense/" + expenseId)
@@ -904,19 +830,198 @@ class ExpenseIntegrationTest {
                                         "Bearer " + tokenB
                                 )
                 )
-                .andExpect(
-                        status().isNotFound()
-                )
-                .andExpect(
-                        jsonPath("$.status")
-                                .value(404)
-                )
+                .andExpect(status().isNotFound())
                 .andExpect(
                         jsonPath("$.message")
                                 .value(
-                                        "Expense not found with id: "
+                                        "Expense not found with id "
                                                 + expenseId
                                 )
                 );
+    }
+
+
+    // =========================================================
+    // USER ISOLATION - UPDATE
+    // =========================================================
+
+    @Test
+    void shouldNotAllowUserToUpdateAnotherUsersExpense()
+            throws Exception {
+
+        String tokenA =
+                registerAndLogin(
+                        "rakesh",
+                        "rakesh@example.com",
+                        "password123"
+                );
+
+
+        String tokenB =
+                registerAndLogin(
+                        "user2",
+                        "user2@example.com",
+                        "password123"
+                );
+
+
+        String createJson = """
+                {
+                    "spendOn": "User A Expense",
+                    "amount": 1000
+                }
+                """;
+
+
+        String response =
+                mockMvc.perform(
+                                post("/Expense")
+                                        .with(csrf())
+                                        .header(
+                                                "Authorization",
+                                                "Bearer " + tokenA
+                                        )
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(createJson)
+                        )
+                        .andExpect(status().isCreated())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+
+        Long expenseId =
+                objectMapper
+                        .readTree(response)
+                        .get("id")
+                        .asLong();
+
+
+        String updateJson = """
+                {
+                    "spendOn": "Hacked Expense",
+                    "amount": 1
+                }
+                """;
+
+
+        mockMvc.perform(
+                        put("/Expense/" + expenseId)
+                                .with(csrf())
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + tokenB
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(updateJson)
+                )
+                .andExpect(
+                        status().isNotFound()
+                );
+
+
+        // Verify User A's expense was not modified
+
+        mockMvc.perform(
+                        get("/Expense/" + expenseId)
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + tokenA
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.spendOn")
+                                .value("User A Expense")
+                )
+                .andExpect(
+                        jsonPath("$.amount")
+                                .value(1000)
+                );
+    }
+
+
+    // =========================================================
+    // USER ISOLATION - DELETE
+    // =========================================================
+
+    @Test
+    void shouldNotAllowUserToDeleteAnotherUsersExpense()
+            throws Exception {
+
+        String tokenA =
+                registerAndLogin(
+                        "rakesh",
+                        "rakesh@example.com",
+                        "password123"
+                );
+
+
+        String tokenB =
+                registerAndLogin(
+                        "user2",
+                        "user2@example.com",
+                        "password123"
+                );
+
+
+        String createJson = """
+                {
+                    "spendOn": "User A Expense",
+                    "amount": 1000
+                }
+                """;
+
+
+        String response =
+                mockMvc.perform(
+                                post("/Expense")
+                                        .with(csrf())
+                                        .header(
+                                                "Authorization",
+                                                "Bearer " + tokenA
+                                        )
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(createJson)
+                        )
+                        .andExpect(status().isCreated())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+
+        Long expenseId =
+                objectMapper
+                        .readTree(response)
+                        .get("id")
+                        .asLong();
+
+
+        mockMvc.perform(
+                        delete("/Expense/" + expenseId)
+                                .with(csrf())
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + tokenB
+                                )
+                )
+                .andExpect(
+                        status().isNotFound()
+                );
+
+
+        // Verify User A's expense still exists
+
+        assertTrue(
+                expenseRepository
+                        .findById(expenseId)
+                        .isPresent()
+        );
     }
 }

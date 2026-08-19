@@ -39,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader =
                 request.getHeader("Authorization");
 
-        // No Authorization header
+        // No JWT
         if (authHeader == null ||
                 !authHeader.startsWith("Bearer ")) {
 
@@ -50,41 +50,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token =
                 authHeader.substring(7);
 
+        // Invalid or expired JWT
+        if (!jwtService.isTokenValid(token)) {
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String email;
 
         try {
             email = jwtService.extractEmail(token);
         } catch (Exception e) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        // User already authenticated
-        if (email != null &&
-                SecurityContextHolder.getContext()
-                        .getAuthentication() == null) {
+        // User is not already authenticated
+        if (SecurityContextHolder
+                .getContext()
+                .getAuthentication() == null) {
 
-            UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(email);
+            UserDetails userDetails;
 
-            if (jwtService.isTokenValid(token)) {
+            try {
+                userDetails =
+                        userDetailsService
+                                .loadUserByUsername(email);
+            } catch (Exception e) {
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
-
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authentication);
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource()
+                            .buildDetails(request)
+            );
+
+            SecurityContextHolder
+                    .getContext()
+                    .setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);

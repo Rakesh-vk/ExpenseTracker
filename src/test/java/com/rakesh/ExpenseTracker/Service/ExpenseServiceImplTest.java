@@ -44,6 +44,11 @@ class ExpenseServiceImplTest {
 
     private User user;
 
+
+    // =========================================================
+    // SETUP
+    // =========================================================
+
     @BeforeEach
     void setUp() {
 
@@ -66,8 +71,10 @@ class ExpenseServiceImplTest {
                 .thenReturn(Optional.of(user));
     }
 
+
     @AfterEach
     void tearDown() {
+
         SecurityContextHolder.clearContext();
     }
 
@@ -79,8 +86,6 @@ class ExpenseServiceImplTest {
     @Test
     void shouldGetExpenseById() {
 
-        log.debug("findById is tested");
-
         Expense expense = new Expense();
 
         expense.setId(1L);
@@ -88,21 +93,29 @@ class ExpenseServiceImplTest {
         expense.setAmount(new BigDecimal("500"));
         expense.setUser(user);
 
-        when(expenseRepository.findById(1L))
+        when(expenseRepository.findByIdAndUser(1L, user))
                 .thenReturn(Optional.of(expense));
+
 
         ExpenseResponseDTO response =
                 expenseService.getDataById(1L);
 
+
         assertEquals(1L, response.getId());
-        assertEquals("Food", response.getSpendOn());
+
+        assertEquals(
+                "Food",
+                response.getSpendOn()
+        );
+
         assertEquals(
                 new BigDecimal("500"),
                 response.getAmount()
         );
 
+
         verify(expenseRepository)
-                .findById(1L);
+                .findByIdAndUser(1L, user);
     }
 
 
@@ -113,10 +126,9 @@ class ExpenseServiceImplTest {
     @Test
     void shouldThrowExceptionWhenExpenseDoesNotExist() {
 
-        log.debug("findById is tested with invalid id");
-
-        when(expenseRepository.findById(99L))
+        when(expenseRepository.findByIdAndUser(99L, user))
                 .thenReturn(Optional.empty());
+
 
         ExpenseNotFound exception =
                 assertThrows(
@@ -124,13 +136,15 @@ class ExpenseServiceImplTest {
                         () -> expenseService.getDataById(99L)
                 );
 
+
         assertEquals(
-                "Expense not found with id: 99",
+                "Expense not found with id 99",
                 exception.getMessage()
         );
 
+
         verify(expenseRepository)
-                .findById(99L);
+                .findByIdAndUser(99L, user);
     }
 
 
@@ -145,40 +159,48 @@ class ExpenseServiceImplTest {
                 new ExpenseRequestDTO();
 
         request.setSpendOn("Food");
-        request.setAmount(new BigDecimal("500"));
+        request.setAmount(
+                new BigDecimal("500")
+        );
 
-        Expense savedExpense = new Expense();
+
+        Expense savedExpense =
+                new Expense();
 
         savedExpense.setId(1L);
         savedExpense.setSpendOn("Food");
-        savedExpense.setAmount(new BigDecimal("500"));
+        savedExpense.setAmount(
+                new BigDecimal("500")
+        );
         savedExpense.setUser(user);
+
 
         when(expenseRepository.save(any(Expense.class)))
                 .thenReturn(savedExpense);
 
+
         ExpenseResponseDTO response =
                 expenseService.saveData(request);
 
-        assertEquals(1L, response.getId());
+
+        assertEquals(
+                1L,
+                response.getId()
+        );
+
         assertEquals(
                 "Food",
                 response.getSpendOn()
         );
+
         assertEquals(
                 new BigDecimal("500"),
                 response.getAmount()
         );
 
+
         verify(expenseRepository)
                 .save(any(Expense.class));
-
-        log.info(
-                "Created expense: id={}, spendOn={}, amount={}",
-                response.getId(),
-                response.getSpendOn(),
-                response.getAmount()
-        );
     }
 
 
@@ -199,6 +221,7 @@ class ExpenseServiceImplTest {
         );
         existingExpense.setUser(user);
 
+
         ExpenseRequestDTO request =
                 new ExpenseRequestDTO();
 
@@ -207,11 +230,13 @@ class ExpenseServiceImplTest {
                 new BigDecimal("1000")
         );
 
-        when(expenseRepository.findById(1L))
+
+        when(expenseRepository.findByIdAndUser(1L, user))
                 .thenReturn(Optional.of(existingExpense));
 
-        when(expenseRepository.save(any(Expense.class)))
+        when(expenseRepository.save(existingExpense))
                 .thenReturn(existingExpense);
+
 
         ExpenseResponseDTO response =
                 expenseService.updateData(
@@ -219,18 +244,25 @@ class ExpenseServiceImplTest {
                         request
                 );
 
-        assertEquals(1L, response.getId());
+
+        assertEquals(
+                1L,
+                response.getId()
+        );
+
         assertEquals(
                 "Shopping",
                 response.getSpendOn()
         );
+
         assertEquals(
                 new BigDecimal("1000"),
                 response.getAmount()
         );
 
+
         verify(expenseRepository)
-                .findById(1L);
+                .findByIdAndUser(1L, user);
 
         verify(expenseRepository)
                 .save(existingExpense);
@@ -244,7 +276,8 @@ class ExpenseServiceImplTest {
     @Test
     void shouldDeleteExpense() {
 
-        Expense expense = new Expense();
+        Expense expense =
+                new Expense();
 
         expense.setId(1L);
         expense.setSpendOn("Food");
@@ -253,13 +286,16 @@ class ExpenseServiceImplTest {
         );
         expense.setUser(user);
 
-        when(expenseRepository.findById(1L))
+
+        when(expenseRepository.findByIdAndUser(1L, user))
                 .thenReturn(Optional.of(expense));
+
 
         expenseService.deleteExpense(1L);
 
+
         verify(expenseRepository)
-                .findById(1L);
+                .findByIdAndUser(1L, user);
 
         verify(expenseRepository)
                 .delete(expense);
@@ -281,8 +317,10 @@ class ExpenseServiceImplTest {
                 new BigDecimal("1000")
         );
 
-        when(expenseRepository.findById(99L))
+
+        when(expenseRepository.findByIdAndUser(99L, user))
                 .thenReturn(Optional.empty());
+
 
         ExpenseNotFound exception =
                 assertThrows(
@@ -293,16 +331,20 @@ class ExpenseServiceImplTest {
                         )
                 );
 
+
         assertEquals(
                 "Expense not found with id 99",
                 exception.getMessage()
         );
 
-        verify(expenseRepository)
-                .findById(99L);
 
-        verify(expenseRepository, never())
-                .save(any(Expense.class));
+        verify(expenseRepository)
+                .findByIdAndUser(99L, user);
+
+        verify(
+                expenseRepository,
+                never()
+        ).save(any(Expense.class));
     }
 
 
@@ -313,8 +355,9 @@ class ExpenseServiceImplTest {
     @Test
     void shouldThrowExceptionWhenDeletingNonExistingExpense() {
 
-        when(expenseRepository.findById(99L))
+        when(expenseRepository.findByIdAndUser(99L, user))
                 .thenReturn(Optional.empty());
+
 
         ExpenseNotFound exception =
                 assertThrows(
@@ -322,16 +365,20 @@ class ExpenseServiceImplTest {
                         () -> expenseService.deleteExpense(99L)
                 );
 
+
         assertEquals(
                 "Expense not found with id 99",
                 exception.getMessage()
         );
 
-        verify(expenseRepository)
-                .findById(99L);
 
-        verify(expenseRepository, never())
-                .delete(any(Expense.class));
+        verify(expenseRepository)
+                .findByIdAndUser(99L, user);
+
+        verify(
+                expenseRepository,
+                never()
+        ).delete(any(Expense.class));
     }
 
 
@@ -342,7 +389,8 @@ class ExpenseServiceImplTest {
     @Test
     void shouldGetAllExpenses() {
 
-        Expense expense1 = new Expense();
+        Expense expense1 =
+                new Expense();
 
         expense1.setId(1L);
         expense1.setSpendOn("Food");
@@ -355,7 +403,8 @@ class ExpenseServiceImplTest {
         expense1.setUser(user);
 
 
-        Expense expense2 = new Expense();
+        Expense expense2 =
+                new Expense();
 
         expense2.setId(2L);
         expense2.setSpendOn("Travel");
@@ -368,7 +417,7 @@ class ExpenseServiceImplTest {
         expense2.setUser(user);
 
 
-        when(expenseRepository.findAll())
+        when(expenseRepository.findAllByUser(user))
                 .thenReturn(
                         List.of(
                                 expense1,
@@ -376,10 +425,16 @@ class ExpenseServiceImplTest {
                         )
                 );
 
+
         List<ExpenseResponseDTO> result =
                 expenseService.getAllData();
 
-        assertEquals(2, result.size());
+
+        assertEquals(
+                2,
+                result.size()
+        );
+
 
         assertEquals(
                 1L,
@@ -412,8 +467,9 @@ class ExpenseServiceImplTest {
                 result.get(1).getAmount()
         );
 
+
         verify(expenseRepository)
-                .findAll();
+                .findAllByUser(user);
     }
 
 
@@ -424,26 +480,8 @@ class ExpenseServiceImplTest {
     @Test
     void shouldNotAllowAccessToAnotherUsersExpense() {
 
-        User anotherUser = new User();
-
-        anotherUser.setId(2L);
-        anotherUser.setUsername("other");
-        anotherUser.setEmail("other@example.com");
-        anotherUser.setPassword("hashedPassword");
-
-
-        Expense expense = new Expense();
-
-        expense.setId(10L);
-        expense.setSpendOn("Private Expense");
-        expense.setAmount(
-                new BigDecimal("1000")
-        );
-        expense.setUser(anotherUser);
-
-
-        when(expenseRepository.findById(10L))
-                .thenReturn(Optional.of(expense));
+        when(expenseRepository.findByIdAndUser(10L, user))
+                .thenReturn(Optional.empty());
 
 
         ExpenseNotFound exception =
@@ -454,9 +492,13 @@ class ExpenseServiceImplTest {
 
 
         assertEquals(
-                "Expense not found with id: 10",
+                "Expense not found with id 10",
                 exception.getMessage()
         );
+
+
+        verify(expenseRepository)
+                .findByIdAndUser(10L, user);
     }
 
 
@@ -467,24 +509,6 @@ class ExpenseServiceImplTest {
     @Test
     void shouldNotAllowUpdatingAnotherUsersExpense() {
 
-        User anotherUser = new User();
-
-        anotherUser.setId(2L);
-        anotherUser.setUsername("other");
-        anotherUser.setEmail("other@example.com");
-        anotherUser.setPassword("hashedPassword");
-
-
-        Expense expense = new Expense();
-
-        expense.setId(10L);
-        expense.setSpendOn("Private Expense");
-        expense.setAmount(
-                new BigDecimal("1000")
-        );
-        expense.setUser(anotherUser);
-
-
         ExpenseRequestDTO request =
                 new ExpenseRequestDTO();
 
@@ -494,8 +518,8 @@ class ExpenseServiceImplTest {
         );
 
 
-        when(expenseRepository.findById(10L))
-                .thenReturn(Optional.of(expense));
+        when(expenseRepository.findByIdAndUser(10L, user))
+                .thenReturn(Optional.empty());
 
 
         ExpenseNotFound exception =
@@ -514,8 +538,13 @@ class ExpenseServiceImplTest {
         );
 
 
-        verify(expenseRepository, never())
-                .save(any(Expense.class));
+        verify(expenseRepository)
+                .findByIdAndUser(10L, user);
+
+        verify(
+                expenseRepository,
+                never()
+        ).save(any(Expense.class));
     }
 
 
@@ -526,26 +555,8 @@ class ExpenseServiceImplTest {
     @Test
     void shouldNotAllowDeletingAnotherUsersExpense() {
 
-        User anotherUser = new User();
-
-        anotherUser.setId(2L);
-        anotherUser.setUsername("other");
-        anotherUser.setEmail("other@example.com");
-        anotherUser.setPassword("hashedPassword");
-
-
-        Expense expense = new Expense();
-
-        expense.setId(10L);
-        expense.setSpendOn("Private Expense");
-        expense.setAmount(
-                new BigDecimal("1000")
-        );
-        expense.setUser(anotherUser);
-
-
-        when(expenseRepository.findById(10L))
-                .thenReturn(Optional.of(expense));
+        when(expenseRepository.findByIdAndUser(10L, user))
+                .thenReturn(Optional.empty());
 
 
         ExpenseNotFound exception =
@@ -561,7 +572,12 @@ class ExpenseServiceImplTest {
         );
 
 
-        verify(expenseRepository, never())
-                .delete(any(Expense.class));
+        verify(expenseRepository)
+                .findByIdAndUser(10L, user);
+
+        verify(
+                expenseRepository,
+                never()
+        ).delete(any(Expense.class));
     }
 }
