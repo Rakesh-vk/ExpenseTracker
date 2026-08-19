@@ -13,6 +13,22 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidCredentials(
+            InvalidCredentialsException ex) {
+
+        ErrorResponseDTO errorResponseDTO =
+                new ErrorResponseDTO(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(errorResponseDTO);
+    }
+
 
     @ExceptionHandler(ExpenseNotFound.class)
     public ResponseEntity<ErrorResponseDTO> handleExpenseNotFound(

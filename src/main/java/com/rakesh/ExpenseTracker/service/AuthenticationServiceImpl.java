@@ -10,16 +10,20 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
+    private final JwtService jwtService;
+
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     public AuthenticationServiceImpl(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -45,9 +49,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             );
         }
 
+        String token = jwtService.generateToken(user.getEmail());
+
         return new LoginResponseDTO(
                 "Login successful",
-                null
+                token
         );
     }
 }

@@ -1,5 +1,7 @@
 package com.rakesh.ExpenseTracker.config;
 
+import com.rakesh.ExpenseTracker.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -8,9 +10,18 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.AuthenticationEntryPoint;
 @Configuration
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -22,34 +33,42 @@ public class SecurityConfig {
             HttpSecurity http) throws Exception {
 
         http
-                // REST API -> disable CSRF
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // No server-side sessions
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-                // Endpoint authorization
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/user/register",
+                                "/auth/login"
+                        ).permitAll()
 
-                        // User registration must be public
-                        .requestMatchers("/user/register").permitAll()
-
-                        // Login will be public
-                        .requestMatchers("/auth/login").permitAll()
-
-                        // Swagger
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // Everything else requires authentication
                         .anyRequest().authenticated()
+                )
+
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(
+                                (request, response, authException) ->
+                                        response.sendError(
+                                                HttpServletResponse.SC_UNAUTHORIZED,
+                                                "Unauthorized"
+                                        )
+                        )
+                )
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
                 );
 
         return http.build();

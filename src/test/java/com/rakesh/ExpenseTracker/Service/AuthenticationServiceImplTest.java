@@ -6,6 +6,7 @@ import com.rakesh.ExpenseTracker.entity.User;
 import com.rakesh.ExpenseTracker.exception.InvalidCredentialsException;
 import com.rakesh.ExpenseTracker.repository.UserRepository;
 import com.rakesh.ExpenseTracker.service.AuthenticationServiceImpl;
+import com.rakesh.ExpenseTracker.service.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -24,11 +25,14 @@ class AuthenticationServiceImplTest {
 
     private final PasswordEncoder passwordEncoder =
             mock(PasswordEncoder.class);
+    private final JwtService jwtService =
+            mock(JwtService.class);
 
     private final AuthenticationServiceImpl authenticationService =
             new AuthenticationServiceImpl(
                     userRepository,
-                    passwordEncoder
+                    passwordEncoder,
+                    jwtService
             );
 
 
