@@ -14,8 +14,6 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -173,7 +171,13 @@ class ExpenseIntegrationTest {
         String response =
                 mockMvc.perform(
                                 post("/Expense")
-                                        .with(csrf())
+                                        .with(
+                                                org.springframework.security
+                                                        .test.web.servlet
+                                                        .request
+                                                        .SecurityMockMvcRequestPostProcessors
+                                                        .csrf()
+                                        )
                                         .header(
                                                 "Authorization",
                                                 "Bearer " + token
@@ -236,7 +240,7 @@ class ExpenseIntegrationTest {
 
 
     // =========================================================
-    // GET ALL
+    // GET ALL - PAGINATION
     // =========================================================
 
     @Test
@@ -265,7 +269,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -280,7 +290,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -293,17 +309,66 @@ class ExpenseIntegrationTest {
                 .andExpect(status().isCreated());
 
 
+        // =====================================================
+        // GET FIRST PAGE
+        // =====================================================
+
         mockMvc.perform(
                         get("/Expense")
+                                .param("page", "0")
+                                .param("size", "10")
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
                                 )
                 )
                 .andExpect(status().isOk())
+
+                // Page content
                 .andExpect(
-                        jsonPath("$.length()")
+                        jsonPath("$.content.length()")
                                 .value(2)
+                )
+
+                .andExpect(
+                        jsonPath("$.content[0].spendOn")
+                                .value("Food")
+                )
+
+                .andExpect(
+                        jsonPath("$.content[0].amount")
+                                .value(500)
+                )
+
+                .andExpect(
+                        jsonPath("$.content[1].spendOn")
+                                .value("Travel")
+                )
+
+                .andExpect(
+                        jsonPath("$.content[1].amount")
+                                .value(1000)
+                )
+
+                // Pagination metadata
+                .andExpect(
+                        jsonPath("$.number")
+                                .value(0)
+                )
+
+                .andExpect(
+                        jsonPath("$.size")
+                                .value(10)
+                )
+
+                .andExpect(
+                        jsonPath("$.totalElements")
+                                .value(2)
+                )
+
+                .andExpect(
+                        jsonPath("$.totalPages")
+                                .value(1)
                 );
     }
 
@@ -331,7 +396,13 @@ class ExpenseIntegrationTest {
         String response =
                 mockMvc.perform(
                                 post("/Expense")
-                                        .with(csrf())
+                                        .with(
+                                                org.springframework.security
+                                                        .test.web.servlet
+                                                        .request
+                                                        .SecurityMockMvcRequestPostProcessors
+                                                        .csrf()
+                                        )
                                         .header(
                                                 "Authorization",
                                                 "Bearer " + token
@@ -364,7 +435,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         put("/Expense/" + id)
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -413,7 +490,13 @@ class ExpenseIntegrationTest {
         String response =
                 mockMvc.perform(
                                 post("/Expense")
-                                        .with(csrf())
+                                        .with(
+                                                org.springframework.security
+                                                        .test.web.servlet
+                                                        .request
+                                                        .SecurityMockMvcRequestPostProcessors
+                                                        .csrf()
+                                        )
                                         .header(
                                                 "Authorization",
                                                 "Bearer " + token
@@ -438,7 +521,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         delete("/Expense/" + id)
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -479,7 +568,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -528,7 +623,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -578,7 +679,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         post("/Expense")
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -665,7 +772,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         put("/Expense/999999")
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -707,7 +820,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         delete("/Expense/999999")
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + token
@@ -783,7 +902,13 @@ class ExpenseIntegrationTest {
         String response =
                 mockMvc.perform(
                                 post("/Expense")
-                                        .with(csrf())
+                                        .with(
+                                                org.springframework.security
+                                                        .test.web.servlet
+                                                        .request
+                                                        .SecurityMockMvcRequestPostProcessors
+                                                        .csrf()
+                                        )
                                         .header(
                                                 "Authorization",
                                                 "Bearer " + tokenA
@@ -876,7 +1001,13 @@ class ExpenseIntegrationTest {
         String response =
                 mockMvc.perform(
                                 post("/Expense")
-                                        .with(csrf())
+                                        .with(
+                                                org.springframework.security
+                                                        .test.web.servlet
+                                                        .request
+                                                        .SecurityMockMvcRequestPostProcessors
+                                                        .csrf()
+                                        )
                                         .header(
                                                 "Authorization",
                                                 "Bearer " + tokenA
@@ -909,7 +1040,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         put("/Expense/" + expenseId)
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + tokenB
@@ -980,7 +1117,13 @@ class ExpenseIntegrationTest {
         String response =
                 mockMvc.perform(
                                 post("/Expense")
-                                        .with(csrf())
+                                        .with(
+                                                org.springframework.security
+                                                        .test.web.servlet
+                                                        .request
+                                                        .SecurityMockMvcRequestPostProcessors
+                                                        .csrf()
+                                        )
                                         .header(
                                                 "Authorization",
                                                 "Bearer " + tokenA
@@ -1005,7 +1148,13 @@ class ExpenseIntegrationTest {
 
         mockMvc.perform(
                         delete("/Expense/" + expenseId)
-                                .with(csrf())
+                                .with(
+                                        org.springframework.security
+                                                .test.web.servlet
+                                                .request
+                                                .SecurityMockMvcRequestPostProcessors
+                                                .csrf()
+                                )
                                 .header(
                                         "Authorization",
                                         "Bearer " + tokenB
@@ -1023,5 +1172,134 @@ class ExpenseIntegrationTest {
                         .findById(expenseId)
                         .isPresent()
         );
+    }
+    // =========================================================
+// PAGINATION - SECOND PAGE
+// =========================================================
+
+    @Test
+    void shouldReturnSecondPageOfExpenses()
+            throws Exception {
+
+        String token =
+                registerAndLogin();
+
+
+        // Create 11 expenses
+
+        for (int i = 1; i <= 11; i++) {
+
+            String requestJson = """
+                {
+                    "spendOn": "Expense %d",
+                    "amount": %d
+                }
+                """.formatted(i, i * 100);
+
+
+            mockMvc.perform(
+                            post("/Expense")
+                                    .with(
+                                            org.springframework.security
+                                                    .test.web.servlet
+                                                    .request
+                                                    .SecurityMockMvcRequestPostProcessors
+                                                    .csrf()
+                                    )
+                                    .header(
+                                            "Authorization",
+                                            "Bearer " + token
+                                    )
+                                    .contentType(
+                                            MediaType.APPLICATION_JSON
+                                    )
+                                    .content(requestJson)
+                    )
+                    .andExpect(
+                            status().isCreated()
+                    );
+        }
+
+
+        // =====================================================
+        // FIRST PAGE
+        // =====================================================
+
+        mockMvc.perform(
+                        get("/Expense")
+                                .param("page", "0")
+                                .param("size", "10")
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isOk())
+
+                .andExpect(
+                        jsonPath("$.content.length()")
+                                .value(10)
+                )
+
+                .andExpect(
+                        jsonPath("$.number")
+                                .value(0)
+                )
+
+                .andExpect(
+                        jsonPath("$.size")
+                                .value(10)
+                )
+
+                .andExpect(
+                        jsonPath("$.totalElements")
+                                .value(11)
+                )
+
+                .andExpect(
+                        jsonPath("$.totalPages")
+                                .value(2)
+                );
+
+
+        // =====================================================
+        // SECOND PAGE
+        // =====================================================
+
+        mockMvc.perform(
+                        get("/Expense")
+                                .param("page", "1")
+                                .param("size", "10")
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isOk())
+
+                .andExpect(
+                        jsonPath("$.content.length()")
+                                .value(1)
+                )
+
+                .andExpect(
+                        jsonPath("$.number")
+                                .value(1)
+                )
+
+                .andExpect(
+                        jsonPath("$.size")
+                                .value(10)
+                )
+
+                .andExpect(
+                        jsonPath("$.totalElements")
+                                .value(11)
+                )
+
+                .andExpect(
+                        jsonPath("$.totalPages")
+                                .value(2)
+                );
     }
 }
