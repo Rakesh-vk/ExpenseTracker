@@ -330,24 +330,19 @@ class ExpenseIntegrationTest {
                                 .value(2)
                 )
 
+                .andExpect(jsonPath("$.content[0].spendOn")
+                        .value("Travel"))
+                .andExpect(jsonPath("$.content[0].amount")
+                        .value(1000))
+
                 .andExpect(
-                        jsonPath("$.content[0].spendOn")
+                        jsonPath("$.content[1].spendOn")
                                 .value("Food")
                 )
 
                 .andExpect(
-                        jsonPath("$.content[0].amount")
-                                .value(500)
-                )
-
-                .andExpect(
-                        jsonPath("$.content[1].spendOn")
-                                .value("Travel")
-                )
-
-                .andExpect(
                         jsonPath("$.content[1].amount")
-                                .value(1000)
+                                .value(500)
                 )
 
                 // Pagination metadata

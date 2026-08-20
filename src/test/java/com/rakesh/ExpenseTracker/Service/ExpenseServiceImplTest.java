@@ -422,7 +422,7 @@ class ExpenseServiceImplTest {
 
 
         when(
-                expenseRepository.findAllByUser(
+                expenseRepository.findAllByUserOrderByDateAndTimeDesc(
                         user,
                         pageable
                 )
@@ -510,7 +510,7 @@ class ExpenseServiceImplTest {
 
 
         verify(expenseRepository)
-                .findAllByUser(
+                .findAllByUserOrderByDateAndTimeDesc(
                         user,
                         pageable
                 );

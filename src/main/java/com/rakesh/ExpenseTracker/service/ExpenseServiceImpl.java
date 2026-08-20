@@ -66,13 +66,12 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<Expense> expenses =
-                expenseRepository.findAllByUser(
+        return expenseRepository
+                .findAllByUserOrderByDateAndTimeDesc(
                         currentUser,
                         pageable
-                );
-
-        return expenses.map(this::mapToResponseDTO);
+                )
+                .map(this::mapToResponseDTO);
     }
 
 

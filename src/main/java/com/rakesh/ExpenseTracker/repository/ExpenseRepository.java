@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
-    Page<Expense> findAllByUser(
+    Page<Expense> findAllByUserOrderByDateAndTimeDesc(
             User user,
             Pageable pageable
     );
