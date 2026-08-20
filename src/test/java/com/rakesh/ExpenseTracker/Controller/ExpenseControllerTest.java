@@ -5,7 +5,6 @@ import com.rakesh.ExpenseTracker.dto.ExpenseRequestDTO;
 import com.rakesh.ExpenseTracker.dto.ExpenseResponseDTO;
 import com.rakesh.ExpenseTracker.exception.ExpenseNotFound;
 import com.rakesh.ExpenseTracker.service.ExpenseService;
-
 import com.rakesh.ExpenseTracker.service.JwtService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,6 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -38,6 +41,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
 @Slf4j
 @WebMvcTest(ExpenseController.class)
 class ExpenseControllerTest {
@@ -55,44 +59,128 @@ class ExpenseControllerTest {
     private UserDetailsService userDetailsService;
 
 
-
     // =========================================================
-    // GET ALL
+    // GET ALL - PAGINATION
     // =========================================================
 
     @Test
     void shouldGetAllExpenses() throws Exception {
 
-        ExpenseResponseDTO expense1 = new ExpenseResponseDTO(
-                1L,
-                "Food",
-                new BigDecimal("500"),
-                LocalDateTime.now()
-        );
+        ExpenseResponseDTO expense1 =
+                new ExpenseResponseDTO(
+                        1L,
+                        "Food",
+                        new BigDecimal("500"),
+                        LocalDateTime.now()
+                );
 
-        ExpenseResponseDTO expense2 = new ExpenseResponseDTO(
-                2L,
-                "Travel",
-                new BigDecimal("1000"),
-                LocalDateTime.now()
-        );
+        ExpenseResponseDTO expense2 =
+                new ExpenseResponseDTO(
+                        2L,
+                        "Travel",
+                        new BigDecimal("1000"),
+                        LocalDateTime.now()
+                );
 
-        when(expenseService.getAllData())
-                .thenReturn(List.of(expense1, expense2));
 
-        mockMvc.perform(get("/Expense"))
+        List<ExpenseResponseDTO> expenses =
+                List.of(
+                        expense1,
+                        expense2
+                );
+
+
+        Pageable pageable =
+                PageRequest.of(0, 10);
+
+
+        Page<ExpenseResponseDTO> expensePage =
+                new PageImpl<>(
+                        expenses,
+                        pageable,
+                        expenses.size()
+                );
+
+
+        when(
+                expenseService.getAllData(
+                        0,
+                        10
+                )
+        ).thenReturn(expensePage);
+
+
+        mockMvc.perform(
+                        get("/Expense")
+                                .param("page", "0")
+                                .param("size", "10")
+                )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].spendOn").value("Food"))
-                .andExpect(jsonPath("$[0].amount").value(500))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].spendOn").value("Travel"))
-                .andExpect(jsonPath("$[1].amount").value(1000));
 
-        verify(expenseService).getAllData();
+                // Page content
+                .andExpect(
+                        jsonPath("$.content.length()")
+                                .value(2)
+                )
 
-        log.info("GET all expenses test passed");
+                .andExpect(
+                        jsonPath("$.content[0].id")
+                                .value(1)
+                )
+
+                .andExpect(
+                        jsonPath("$.content[0].spendOn")
+                                .value("Food")
+                )
+
+                .andExpect(
+                        jsonPath("$.content[0].amount")
+                                .value(500)
+                )
+
+                .andExpect(
+                        jsonPath("$.content[1].id")
+                                .value(2)
+                )
+
+                .andExpect(
+                        jsonPath("$.content[1].spendOn")
+                                .value("Travel")
+                )
+
+                .andExpect(
+                        jsonPath("$.content[1].amount")
+                                .value(1000)
+                )
+
+                // Pagination metadata
+                .andExpect(
+                        jsonPath("$.number")
+                                .value(0)
+                )
+
+                .andExpect(
+                        jsonPath("$.size")
+                                .value(10)
+                )
+
+                .andExpect(
+                        jsonPath("$.totalElements")
+                                .value(2)
+                )
+
+                .andExpect(
+                        jsonPath("$.totalPages")
+                                .value(1)
+                );
+
+
+        verify(expenseService)
+                .getAllData(0, 10);
+
+        log.info(
+                "GET all expenses pagination test passed"
+        );
     }
 
 
@@ -103,25 +191,43 @@ class ExpenseControllerTest {
     @Test
     void shouldGetExpenseById() throws Exception {
 
-        ExpenseResponseDTO response = new ExpenseResponseDTO(
-                1L,
-                "Food",
-                new BigDecimal("500"),
-                LocalDateTime.now()
-        );
+        ExpenseResponseDTO response =
+                new ExpenseResponseDTO(
+                        1L,
+                        "Food",
+                        new BigDecimal("500"),
+                        LocalDateTime.now()
+                );
 
-        when(expenseService.getDataById(1L))
-                .thenReturn(response);
+        when(
+                expenseService.getDataById(1L)
+        ).thenReturn(response);
 
-        mockMvc.perform(get("/Expense/1"))
+
+        mockMvc.perform(
+                        get("/Expense/1")
+                )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.spendOn").value("Food"))
-                .andExpect(jsonPath("$.amount").value(500));
+                .andExpect(
+                        jsonPath("$.id")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.spendOn")
+                                .value("Food")
+                )
+                .andExpect(
+                        jsonPath("$.amount")
+                                .value(500)
+                );
 
-        verify(expenseService).getDataById(1L);
 
-        log.info("GET expense by ID test passed");
+        verify(expenseService)
+                .getDataById(1L);
+
+        log.info(
+                "GET expense by ID test passed"
+        );
     }
 
 
@@ -130,25 +236,44 @@ class ExpenseControllerTest {
     // =========================================================
 
     @Test
-    void shouldReturn404WhenExpenseNotFound() throws Exception {
+    void shouldReturn404WhenExpenseNotFound()
+            throws Exception {
 
-        when(expenseService.getDataById(99L))
-                .thenThrow(
-                        new ExpenseNotFound(
-                                "Expense not found with id: 99"
-                        )
+        when(
+                expenseService.getDataById(99L)
+        ).thenThrow(
+                new ExpenseNotFound(
+                        "Expense not found with id: 99"
+                )
+        );
+
+
+        mockMvc.perform(
+                        get("/Expense/99")
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(404)
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Expense not found with id: 99"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.timestamp")
+                                .exists()
                 );
 
-        mockMvc.perform(get("/Expense/99"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message")
-                        .value("Expense not found with id: 99"))
-                .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(expenseService).getDataById(99L);
+        verify(expenseService)
+                .getDataById(99L);
 
-        log.info("GET non-existing expense test passed");
+        log.info(
+                "GET non-existing expense test passed"
+        );
     }
 
 
@@ -159,15 +284,21 @@ class ExpenseControllerTest {
     @Test
     void shouldCreateExpense() throws Exception {
 
-        ExpenseResponseDTO response = new ExpenseResponseDTO(
-                1L,
-                "Food",
-                new BigDecimal("500"),
-                LocalDateTime.now()
-        );
+        ExpenseResponseDTO response =
+                new ExpenseResponseDTO(
+                        1L,
+                        "Food",
+                        new BigDecimal("500"),
+                        LocalDateTime.now()
+                );
 
-        when(expenseService.saveData(any(ExpenseRequestDTO.class)))
-                .thenReturn(response);
+
+        when(
+                expenseService.saveData(
+                        any(ExpenseRequestDTO.class)
+                )
+        ).thenReturn(response);
+
 
         String requestJson = """
                 {
@@ -176,20 +307,37 @@ class ExpenseControllerTest {
                 }
                 """;
 
+
         mockMvc.perform(
                         post("/Expense")
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content(requestJson)
                 )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.spendOn").value("Food"))
-                .andExpect(jsonPath("$.amount").value(500));
+                .andExpect(
+                        jsonPath("$.id")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.spendOn")
+                                .value("Food")
+                )
+                .andExpect(
+                        jsonPath("$.amount")
+                                .value(500)
+                );
+
 
         verify(expenseService)
-                .saveData(any(ExpenseRequestDTO.class));
+                .saveData(
+                        any(ExpenseRequestDTO.class)
+                );
 
-        log.info("POST create expense test passed");
+        log.info(
+                "POST create expense test passed"
+        );
     }
 
 
@@ -198,7 +346,8 @@ class ExpenseControllerTest {
     // =========================================================
 
     @Test
-    void shouldRejectNegativeAmount() throws Exception {
+    void shouldRejectNegativeAmount()
+            throws Exception {
 
         String requestJson = """
                 {
@@ -207,23 +356,42 @@ class ExpenseControllerTest {
                 }
                 """;
 
+
         mockMvc.perform(
                         post("/Expense")
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message")
-                        .value("Amount must be greater than zero"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(400)
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Amount must be greater than zero"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.timestamp")
+                                .exists()
+                );
+
 
         verify(
                 expenseService,
                 never()
-        ).saveData(any(ExpenseRequestDTO.class));
+        ).saveData(
+                any(ExpenseRequestDTO.class)
+        );
 
-        log.info("POST negative amount validation test passed");
+
+        log.info(
+                "POST negative amount validation test passed"
+        );
     }
 
 
@@ -232,7 +400,8 @@ class ExpenseControllerTest {
     // =========================================================
 
     @Test
-    void shouldRejectNullAmount() throws Exception {
+    void shouldRejectNullAmount()
+            throws Exception {
 
         String requestJson = """
                 {
@@ -241,23 +410,42 @@ class ExpenseControllerTest {
                 }
                 """;
 
+
         mockMvc.perform(
                         post("/Expense")
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message")
-                        .value("Amount is required"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(400)
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Amount is required"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.timestamp")
+                                .exists()
+                );
+
 
         verify(
                 expenseService,
                 never()
-        ).saveData(any(ExpenseRequestDTO.class));
+        ).saveData(
+                any(ExpenseRequestDTO.class)
+        );
 
-        log.info("POST null amount validation test passed");
+
+        log.info(
+                "POST null amount validation test passed"
+        );
     }
 
 
@@ -266,7 +454,8 @@ class ExpenseControllerTest {
     // =========================================================
 
     @Test
-    void shouldRejectEmptySpendOn() throws Exception {
+    void shouldRejectEmptySpendOn()
+            throws Exception {
 
         String requestJson = """
                 {
@@ -275,23 +464,42 @@ class ExpenseControllerTest {
                 }
                 """;
 
+
         mockMvc.perform(
                         post("/Expense")
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message")
-                        .value("Spend on is required"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(400)
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Spend on is required"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.timestamp")
+                                .exists()
+                );
+
 
         verify(
                 expenseService,
                 never()
-        ).saveData(any(ExpenseRequestDTO.class));
+        ).saveData(
+                any(ExpenseRequestDTO.class)
+        );
 
-        log.info("POST empty spendOn validation test passed");
+
+        log.info(
+                "POST empty spendOn validation test passed"
+        );
     }
 
 
@@ -300,14 +508,17 @@ class ExpenseControllerTest {
     // =========================================================
 
     @Test
-    void shouldUpdateExpense() throws Exception {
+    void shouldUpdateExpense()
+            throws Exception {
 
-        ExpenseResponseDTO response = new ExpenseResponseDTO(
-                1L,
-                "Shopping",
-                new BigDecimal("1000"),
-                LocalDateTime.now()
-        );
+        ExpenseResponseDTO response =
+                new ExpenseResponseDTO(
+                        1L,
+                        "Shopping",
+                        new BigDecimal("1000"),
+                        LocalDateTime.now()
+                );
+
 
         when(
                 expenseService.updateData(
@@ -316,6 +527,7 @@ class ExpenseControllerTest {
                 )
         ).thenReturn(response);
 
+
         String requestJson = """
                 {
                     "spendOn": "Shopping",
@@ -323,15 +535,28 @@ class ExpenseControllerTest {
                 }
                 """;
 
+
         mockMvc.perform(
                         put("/Expense/1")
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content(requestJson)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.spendOn").value("Shopping"))
-                .andExpect(jsonPath("$.amount").value(1000));
+                .andExpect(
+                        jsonPath("$.id")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.spendOn")
+                                .value("Shopping")
+                )
+                .andExpect(
+                        jsonPath("$.amount")
+                                .value(1000)
+                );
+
 
         verify(expenseService)
                 .updateData(
@@ -339,7 +564,10 @@ class ExpenseControllerTest {
                         any(ExpenseRequestDTO.class)
                 );
 
-        log.info("PUT update expense test passed");
+
+        log.info(
+                "PUT update expense test passed"
+        );
     }
 
 
@@ -348,7 +576,8 @@ class ExpenseControllerTest {
     // =========================================================
 
     @Test
-    void shouldRejectNegativeAmountOnUpdate() throws Exception {
+    void shouldRejectNegativeAmountOnUpdate()
+            throws Exception {
 
         String requestJson = """
                 {
@@ -357,16 +586,30 @@ class ExpenseControllerTest {
                 }
                 """;
 
+
         mockMvc.perform(
                         put("/Expense/1")
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content(requestJson)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message")
-                        .value("Amount must be greater than zero"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(400)
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Amount must be greater than zero"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.timestamp")
+                                .exists()
+                );
+
 
         verify(
                 expenseService,
@@ -376,7 +619,10 @@ class ExpenseControllerTest {
                 any(ExpenseRequestDTO.class)
         );
 
-        log.info("PUT negative amount validation test passed");
+
+        log.info(
+                "PUT negative amount validation test passed"
+        );
     }
 
 
@@ -399,6 +645,7 @@ class ExpenseControllerTest {
                 )
         );
 
+
         String requestJson = """
                 {
                     "spendOn": "Food",
@@ -406,16 +653,30 @@ class ExpenseControllerTest {
                 }
                 """;
 
+
         mockMvc.perform(
                         put("/Expense/99")
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content(requestJson)
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message")
-                        .value("Expense not found with id 99"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(404)
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Expense not found with id 99"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.timestamp")
+                                .exists()
+                );
+
 
         verify(expenseService)
                 .updateData(
@@ -423,7 +684,10 @@ class ExpenseControllerTest {
                         any(ExpenseRequestDTO.class)
                 );
 
-        log.info("PUT non-existing expense test passed");
+
+        log.info(
+                "PUT non-existing expense test passed"
+        );
     }
 
 
@@ -432,19 +696,29 @@ class ExpenseControllerTest {
     // =========================================================
 
     @Test
-    void shouldDeleteExpense() throws Exception {
+    void shouldDeleteExpense()
+            throws Exception {
 
         doNothing()
                 .when(expenseService)
                 .deleteExpense(1L);
 
-        mockMvc.perform(delete("/Expense/1"))
-                .andExpect(status().isNoContent());
+
+        mockMvc.perform(
+                        delete("/Expense/1")
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+
 
         verify(expenseService)
                 .deleteExpense(1L);
 
-        log.info("DELETE expense test passed");
+
+        log.info(
+                "DELETE expense test passed"
+        );
     }
 
 
@@ -464,16 +738,90 @@ class ExpenseControllerTest {
                 .when(expenseService)
                 .deleteExpense(99L);
 
-        mockMvc.perform(delete("/Expense/99"))
+
+        mockMvc.perform(
+                        delete("/Expense/99")
+                )
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message")
-                        .value("Expense not found with id 99"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(404)
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Expense not found with id 99"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.timestamp")
+                                .exists()
+                );
+
 
         verify(expenseService)
                 .deleteExpense(99L);
 
-        log.info("DELETE non-existing expense test passed");
+
+        log.info(
+                "DELETE non-existing expense test passed"
+        );
+    }
+    @Test
+    void shouldRejectNegativePage() throws Exception {
+
+        mockMvc.perform(
+                        get("/Expense")
+                                .param("page", "-1")
+                                .param("size", "10")
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Page must be greater than or equal to zero"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(
+                expenseService,
+                never()
+        ).getAllData(any(Integer.class), any(Integer.class));
+    }
+    @Test
+    void shouldRejectZeroSize() throws Exception {
+
+        mockMvc.perform(
+                        get("/Expense")
+                                .param("page", "0")
+                                .param("size", "0")
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Size must be greater than zero"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(
+                expenseService,
+                never()
+        ).getAllData(any(Integer.class), any(Integer.class));
+    }
+    @Test
+    void shouldRejectSizeGreaterThan100() throws Exception {
+
+        mockMvc.perform(
+                        get("/Expense")
+                                .param("page", "0")
+                                .param("size", "101")
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Size must not be greater than 100"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(
+                expenseService,
+                never()
+        ).getAllData(any(Integer.class), any(Integer.class));
     }
 }

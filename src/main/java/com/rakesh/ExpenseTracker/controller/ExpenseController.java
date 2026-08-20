@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -54,9 +55,28 @@ public class ExpenseController {
             )
     )
     @GetMapping
-    public ResponseEntity<List<ExpenseResponseDTO>> getAllExpenses(){
-        log.debug("GET /Expense - fetching all expenses");
-        return new ResponseEntity<>(expenseService.getAllData(), HttpStatus.OK);
+    public Page<ExpenseResponseDTO> getAllExpenses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException(
+                    "Page must be greater than or equal to zero"
+            );
+        }
+
+        if (size <= 0) {
+            throw new IllegalArgumentException(
+                    "Size must be greater than zero"
+            );
+        }
+
+        if (size > 100) {
+            throw new IllegalArgumentException(
+                    "Size must not be greater than 100"
+            );
+        }
+
+        return expenseService.getAllData(page, size);
     }
     @Operation(
             summary = "Get expenses By ID",

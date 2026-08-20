@@ -3,15 +3,18 @@ package com.rakesh.ExpenseTracker.exception;
 import com.rakesh.ExpenseTracker.dto.ErrorResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.time.LocalDateTime;
 
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // =========================================================
+    // INVALID CREDENTIALS
+    // =========================================================
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponseDTO> handleInvalidCredentials(
@@ -30,39 +33,94 @@ public class GlobalExceptionHandler {
     }
 
 
+    // =========================================================
+    // EXPENSE NOT FOUND
+    // =========================================================
+
     @ExceptionHandler(ExpenseNotFound.class)
     public ResponseEntity<ErrorResponseDTO> handleExpenseNotFound(
             ExpenseNotFound ex) {
-        ErrorResponseDTO errorResponseDTO= new ErrorResponseDTO(HttpStatus.NOT_FOUND.value(),ex.getMessage(), LocalDateTime.now());
+
+        ErrorResponseDTO errorResponseDTO =
+                new ErrorResponseDTO(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                );
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(errorResponseDTO);
-
     }
+
+
+    // =========================================================
+    // USER ALREADY EXISTS
+    // =========================================================
+
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponseDTO> handleUserAlreadyExistsException(
-            UserAlreadyExistsException ex
-    ){
-        ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(HttpStatus.CONFLICT.value(),ex.getMessage(),LocalDateTime.now());
+    public ResponseEntity<ErrorResponseDTO>
+    handleUserAlreadyExistsException(
+            UserAlreadyExistsException ex) {
 
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponseDTO);
+        ErrorResponseDTO errorResponseDTO =
+                new ErrorResponseDTO(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(errorResponseDTO);
     }
 
-    // bean validation exception handler
+
+    // =========================================================
+    // BEAN VALIDATION
+    // =========================================================
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponseDTO> handleValidationErrors(
+    public ResponseEntity<ErrorResponseDTO>
+    handleValidationErrors(
             MethodArgumentNotValidException ex) {
 
+        String message =
+                ex.getBindingResult()
+                        .getFieldErrors()
+                        .stream()
+                        .map(error -> error.getDefaultMessage())
+                        .findFirst()
+                        .orElse("Invalid request");
 
-        String message = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> error.getDefaultMessage())
-                .findFirst()
-                .orElse("Invalid request");
-        ErrorResponseDTO errorResponseDTO= new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(),message, LocalDateTime.now());
+        ErrorResponseDTO errorResponseDTO =
+                new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        message,
+                        LocalDateTime.now()
+                );
 
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorResponseDTO);
+    }
+
+
+    // =========================================================
+    // INVALID PAGINATION PARAMETERS
+    // =========================================================
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponseDTO>
+    handleIllegalArgumentException(
+            IllegalArgumentException ex) {
+
+        ErrorResponseDTO errorResponseDTO =
+                new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

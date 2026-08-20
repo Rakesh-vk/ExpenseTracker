@@ -7,6 +7,9 @@ import com.rakesh.ExpenseTracker.entity.User;
 import com.rakesh.ExpenseTracker.exception.ExpenseNotFound;
 import com.rakesh.ExpenseTracker.repository.ExpenseRepository;
 import com.rakesh.ExpenseTracker.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -57,15 +60,19 @@ public class ExpenseServiceImpl implements ExpenseService {
     // =========================================================
 
     @Override
-    public List<ExpenseResponseDTO> getAllData() {
+    public Page<ExpenseResponseDTO> getAllData(int page, int size) {
 
         User currentUser = getCurrentUser();
 
-        return expenseRepository
-                .findAllByUser(currentUser)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .toList();
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Expense> expenses =
+                expenseRepository.findAllByUser(
+                        currentUser,
+                        pageable
+                );
+
+        return expenses.map(this::mapToResponseDTO);
     }
 
 

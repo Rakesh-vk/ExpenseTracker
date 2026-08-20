@@ -16,6 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -72,6 +76,10 @@ class ExpenseServiceImplTest {
     }
 
 
+    // =========================================================
+    // CLEANUP
+    // =========================================================
+
     @AfterEach
     void tearDown() {
 
@@ -96,12 +104,13 @@ class ExpenseServiceImplTest {
         when(expenseRepository.findByIdAndUser(1L, user))
                 .thenReturn(Optional.of(expense));
 
-
         ExpenseResponseDTO response =
                 expenseService.getDataById(1L);
 
-
-        assertEquals(1L, response.getId());
+        assertEquals(
+                1L,
+                response.getId()
+        );
 
         assertEquals(
                 "Food",
@@ -112,7 +121,6 @@ class ExpenseServiceImplTest {
                 new BigDecimal("500"),
                 response.getAmount()
         );
-
 
         verify(expenseRepository)
                 .findByIdAndUser(1L, user);
@@ -129,19 +137,16 @@ class ExpenseServiceImplTest {
         when(expenseRepository.findByIdAndUser(99L, user))
                 .thenReturn(Optional.empty());
 
-
         ExpenseNotFound exception =
                 assertThrows(
                         ExpenseNotFound.class,
                         () -> expenseService.getDataById(99L)
                 );
 
-
         assertEquals(
                 "Expense not found with id 99",
                 exception.getMessage()
         );
-
 
         verify(expenseRepository)
                 .findByIdAndUser(99L, user);
@@ -163,7 +168,6 @@ class ExpenseServiceImplTest {
                 new BigDecimal("500")
         );
 
-
         Expense savedExpense =
                 new Expense();
 
@@ -174,14 +178,11 @@ class ExpenseServiceImplTest {
         );
         savedExpense.setUser(user);
 
-
         when(expenseRepository.save(any(Expense.class)))
                 .thenReturn(savedExpense);
 
-
         ExpenseResponseDTO response =
                 expenseService.saveData(request);
-
 
         assertEquals(
                 1L,
@@ -197,7 +198,6 @@ class ExpenseServiceImplTest {
                 new BigDecimal("500"),
                 response.getAmount()
         );
-
 
         verify(expenseRepository)
                 .save(any(Expense.class));
@@ -221,7 +221,6 @@ class ExpenseServiceImplTest {
         );
         existingExpense.setUser(user);
 
-
         ExpenseRequestDTO request =
                 new ExpenseRequestDTO();
 
@@ -230,20 +229,17 @@ class ExpenseServiceImplTest {
                 new BigDecimal("1000")
         );
 
-
         when(expenseRepository.findByIdAndUser(1L, user))
                 .thenReturn(Optional.of(existingExpense));
 
         when(expenseRepository.save(existingExpense))
                 .thenReturn(existingExpense);
 
-
         ExpenseResponseDTO response =
                 expenseService.updateData(
                         1L,
                         request
                 );
-
 
         assertEquals(
                 1L,
@@ -259,7 +255,6 @@ class ExpenseServiceImplTest {
                 new BigDecimal("1000"),
                 response.getAmount()
         );
-
 
         verify(expenseRepository)
                 .findByIdAndUser(1L, user);
@@ -286,13 +281,10 @@ class ExpenseServiceImplTest {
         );
         expense.setUser(user);
 
-
         when(expenseRepository.findByIdAndUser(1L, user))
                 .thenReturn(Optional.of(expense));
 
-
         expenseService.deleteExpense(1L);
-
 
         verify(expenseRepository)
                 .findByIdAndUser(1L, user);
@@ -317,10 +309,8 @@ class ExpenseServiceImplTest {
                 new BigDecimal("1000")
         );
 
-
         when(expenseRepository.findByIdAndUser(99L, user))
                 .thenReturn(Optional.empty());
-
 
         ExpenseNotFound exception =
                 assertThrows(
@@ -331,12 +321,10 @@ class ExpenseServiceImplTest {
                         )
                 );
 
-
         assertEquals(
                 "Expense not found with id 99",
                 exception.getMessage()
         );
-
 
         verify(expenseRepository)
                 .findByIdAndUser(99L, user);
@@ -358,19 +346,16 @@ class ExpenseServiceImplTest {
         when(expenseRepository.findByIdAndUser(99L, user))
                 .thenReturn(Optional.empty());
 
-
         ExpenseNotFound exception =
                 assertThrows(
                         ExpenseNotFound.class,
                         () -> expenseService.deleteExpense(99L)
                 );
 
-
         assertEquals(
                 "Expense not found with id 99",
                 exception.getMessage()
         );
-
 
         verify(expenseRepository)
                 .findByIdAndUser(99L, user);
@@ -383,7 +368,7 @@ class ExpenseServiceImplTest {
 
 
     // =========================================================
-    // GET ALL EXPENSES
+    // GET ALL EXPENSES - PAGINATION
     // =========================================================
 
     @Test
@@ -417,59 +402,118 @@ class ExpenseServiceImplTest {
         expense2.setUser(user);
 
 
-        when(expenseRepository.findAllByUser(user))
-                .thenReturn(
-                        List.of(
-                                expense1,
-                                expense2
-                        )
+        List<Expense> expenses =
+                List.of(
+                        expense1,
+                        expense2
                 );
 
 
-        List<ExpenseResponseDTO> result =
-                expenseService.getAllData();
+        Pageable pageable =
+                PageRequest.of(0, 10);
+
+
+        Page<Expense> expensePage =
+                new PageImpl<>(
+                        expenses,
+                        pageable,
+                        expenses.size()
+                );
+
+
+        when(
+                expenseRepository.findAllByUser(
+                        user,
+                        pageable
+                )
+        ).thenReturn(expensePage);
+
+
+        Page<ExpenseResponseDTO> result =
+                expenseService.getAllData(
+                        0,
+                        10
+                );
 
 
         assertEquals(
                 2,
-                result.size()
+                result.getContent().size()
         );
 
 
         assertEquals(
                 1L,
-                result.get(0).getId()
+                result.getContent()
+                        .get(0)
+                        .getId()
         );
 
         assertEquals(
                 "Food",
-                result.get(0).getSpendOn()
+                result.getContent()
+                        .get(0)
+                        .getSpendOn()
         );
 
         assertEquals(
                 new BigDecimal("500"),
-                result.get(0).getAmount()
+                result.getContent()
+                        .get(0)
+                        .getAmount()
         );
 
 
         assertEquals(
                 2L,
-                result.get(1).getId()
+                result.getContent()
+                        .get(1)
+                        .getId()
         );
 
         assertEquals(
                 "Travel",
-                result.get(1).getSpendOn()
+                result.getContent()
+                        .get(1)
+                        .getSpendOn()
         );
 
         assertEquals(
                 new BigDecimal("1000"),
-                result.get(1).getAmount()
+                result.getContent()
+                        .get(1)
+                        .getAmount()
+        );
+
+
+        // Pagination assertions
+
+        assertEquals(
+                0,
+                result.getNumber()
+        );
+
+        assertEquals(
+                10,
+                result.getSize()
+        );
+
+        assertEquals(
+                2,
+                result.getTotalElements()
+        );
+
+        assertEquals(
+                1,
+                result.getTotalPages()
         );
 
 
         verify(expenseRepository)
-                .findAllByUser(user);
+                .findAllByUser(
+                        user,
+                        pageable
+                );
     }
 
 
@@ -483,19 +527,16 @@ class ExpenseServiceImplTest {
         when(expenseRepository.findByIdAndUser(10L, user))
                 .thenReturn(Optional.empty());
 
-
         ExpenseNotFound exception =
                 assertThrows(
                         ExpenseNotFound.class,
                         () -> expenseService.getDataById(10L)
                 );
 
-
         assertEquals(
                 "Expense not found with id 10",
                 exception.getMessage()
         );
-
 
         verify(expenseRepository)
                 .findByIdAndUser(10L, user);
@@ -517,10 +558,8 @@ class ExpenseServiceImplTest {
                 new BigDecimal("1")
         );
 
-
         when(expenseRepository.findByIdAndUser(10L, user))
                 .thenReturn(Optional.empty());
-
 
         ExpenseNotFound exception =
                 assertThrows(
@@ -531,12 +570,10 @@ class ExpenseServiceImplTest {
                         )
                 );
 
-
         assertEquals(
                 "Expense not found with id 10",
                 exception.getMessage()
         );
-
 
         verify(expenseRepository)
                 .findByIdAndUser(10L, user);
@@ -558,19 +595,16 @@ class ExpenseServiceImplTest {
         when(expenseRepository.findByIdAndUser(10L, user))
                 .thenReturn(Optional.empty());
 
-
         ExpenseNotFound exception =
                 assertThrows(
                         ExpenseNotFound.class,
                         () -> expenseService.deleteExpense(10L)
                 );
 
-
         assertEquals(
                 "Expense not found with id 10",
                 exception.getMessage()
         );
-
 
         verify(expenseRepository)
                 .findByIdAndUser(10L, user);
